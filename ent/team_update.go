@@ -34,34 +34,34 @@ func (tu *TeamUpdate) SetName(s string) *TeamUpdate {
 	return tu
 }
 
-// AddHomeIDIDs adds the "home_id" edge to the Match entity by IDs.
-func (tu *TeamUpdate) AddHomeIDIDs(ids ...int) *TeamUpdate {
-	tu.mutation.AddHomeIDIDs(ids...)
+// AddHomeMatchIDs adds the "home_matches" edge to the Match entity by IDs.
+func (tu *TeamUpdate) AddHomeMatchIDs(ids ...int) *TeamUpdate {
+	tu.mutation.AddHomeMatchIDs(ids...)
 	return tu
 }
 
-// AddHomeID adds the "home_id" edges to the Match entity.
-func (tu *TeamUpdate) AddHomeID(m ...*Match) *TeamUpdate {
+// AddHomeMatches adds the "home_matches" edges to the Match entity.
+func (tu *TeamUpdate) AddHomeMatches(m ...*Match) *TeamUpdate {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return tu.AddHomeIDIDs(ids...)
+	return tu.AddHomeMatchIDs(ids...)
 }
 
-// AddAwayIDIDs adds the "away_id" edge to the Match entity by IDs.
-func (tu *TeamUpdate) AddAwayIDIDs(ids ...int) *TeamUpdate {
-	tu.mutation.AddAwayIDIDs(ids...)
+// AddAwayMatchIDs adds the "away_matches" edge to the Match entity by IDs.
+func (tu *TeamUpdate) AddAwayMatchIDs(ids ...int) *TeamUpdate {
+	tu.mutation.AddAwayMatchIDs(ids...)
 	return tu
 }
 
-// AddAwayID adds the "away_id" edges to the Match entity.
-func (tu *TeamUpdate) AddAwayID(m ...*Match) *TeamUpdate {
+// AddAwayMatches adds the "away_matches" edges to the Match entity.
+func (tu *TeamUpdate) AddAwayMatches(m ...*Match) *TeamUpdate {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return tu.AddAwayIDIDs(ids...)
+	return tu.AddAwayMatchIDs(ids...)
 }
 
 // Mutation returns the TeamMutation object of the builder.
@@ -69,46 +69,46 @@ func (tu *TeamUpdate) Mutation() *TeamMutation {
 	return tu.mutation
 }
 
-// ClearHomeID clears all "home_id" edges to the Match entity.
-func (tu *TeamUpdate) ClearHomeID() *TeamUpdate {
-	tu.mutation.ClearHomeID()
+// ClearHomeMatches clears all "home_matches" edges to the Match entity.
+func (tu *TeamUpdate) ClearHomeMatches() *TeamUpdate {
+	tu.mutation.ClearHomeMatches()
 	return tu
 }
 
-// RemoveHomeIDIDs removes the "home_id" edge to Match entities by IDs.
-func (tu *TeamUpdate) RemoveHomeIDIDs(ids ...int) *TeamUpdate {
-	tu.mutation.RemoveHomeIDIDs(ids...)
+// RemoveHomeMatchIDs removes the "home_matches" edge to Match entities by IDs.
+func (tu *TeamUpdate) RemoveHomeMatchIDs(ids ...int) *TeamUpdate {
+	tu.mutation.RemoveHomeMatchIDs(ids...)
 	return tu
 }
 
-// RemoveHomeID removes "home_id" edges to Match entities.
-func (tu *TeamUpdate) RemoveHomeID(m ...*Match) *TeamUpdate {
+// RemoveHomeMatches removes "home_matches" edges to Match entities.
+func (tu *TeamUpdate) RemoveHomeMatches(m ...*Match) *TeamUpdate {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return tu.RemoveHomeIDIDs(ids...)
+	return tu.RemoveHomeMatchIDs(ids...)
 }
 
-// ClearAwayID clears all "away_id" edges to the Match entity.
-func (tu *TeamUpdate) ClearAwayID() *TeamUpdate {
-	tu.mutation.ClearAwayID()
+// ClearAwayMatches clears all "away_matches" edges to the Match entity.
+func (tu *TeamUpdate) ClearAwayMatches() *TeamUpdate {
+	tu.mutation.ClearAwayMatches()
 	return tu
 }
 
-// RemoveAwayIDIDs removes the "away_id" edge to Match entities by IDs.
-func (tu *TeamUpdate) RemoveAwayIDIDs(ids ...int) *TeamUpdate {
-	tu.mutation.RemoveAwayIDIDs(ids...)
+// RemoveAwayMatchIDs removes the "away_matches" edge to Match entities by IDs.
+func (tu *TeamUpdate) RemoveAwayMatchIDs(ids ...int) *TeamUpdate {
+	tu.mutation.RemoveAwayMatchIDs(ids...)
 	return tu
 }
 
-// RemoveAwayID removes "away_id" edges to Match entities.
-func (tu *TeamUpdate) RemoveAwayID(m ...*Match) *TeamUpdate {
+// RemoveAwayMatches removes "away_matches" edges to Match entities.
+func (tu *TeamUpdate) RemoveAwayMatches(m ...*Match) *TeamUpdate {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return tu.RemoveAwayIDIDs(ids...)
+	return tu.RemoveAwayMatchIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -190,12 +190,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: team.FieldName,
 		})
 	}
-	if tu.mutation.HomeIDCleared() {
+	if tu.mutation.HomeMatchesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.HomeIDTable,
-			Columns: []string{team.HomeIDColumn},
+			Inverse: true,
+			Table:   team.HomeMatchesTable,
+			Columns: []string{team.HomeMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -206,12 +206,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.RemovedHomeIDIDs(); len(nodes) > 0 && !tu.mutation.HomeIDCleared() {
+	if nodes := tu.mutation.RemovedHomeMatchesIDs(); len(nodes) > 0 && !tu.mutation.HomeMatchesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.HomeIDTable,
-			Columns: []string{team.HomeIDColumn},
+			Inverse: true,
+			Table:   team.HomeMatchesTable,
+			Columns: []string{team.HomeMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -225,12 +225,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.HomeIDIDs(); len(nodes) > 0 {
+	if nodes := tu.mutation.HomeMatchesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.HomeIDTable,
-			Columns: []string{team.HomeIDColumn},
+			Inverse: true,
+			Table:   team.HomeMatchesTable,
+			Columns: []string{team.HomeMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -244,12 +244,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tu.mutation.AwayIDCleared() {
+	if tu.mutation.AwayMatchesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.AwayIDTable,
-			Columns: []string{team.AwayIDColumn},
+			Inverse: true,
+			Table:   team.AwayMatchesTable,
+			Columns: []string{team.AwayMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -260,12 +260,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.RemovedAwayIDIDs(); len(nodes) > 0 && !tu.mutation.AwayIDCleared() {
+	if nodes := tu.mutation.RemovedAwayMatchesIDs(); len(nodes) > 0 && !tu.mutation.AwayMatchesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.AwayIDTable,
-			Columns: []string{team.AwayIDColumn},
+			Inverse: true,
+			Table:   team.AwayMatchesTable,
+			Columns: []string{team.AwayMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -279,12 +279,12 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.AwayIDIDs(); len(nodes) > 0 {
+	if nodes := tu.mutation.AwayMatchesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.AwayIDTable,
-			Columns: []string{team.AwayIDColumn},
+			Inverse: true,
+			Table:   team.AwayMatchesTable,
+			Columns: []string{team.AwayMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -323,34 +323,34 @@ func (tuo *TeamUpdateOne) SetName(s string) *TeamUpdateOne {
 	return tuo
 }
 
-// AddHomeIDIDs adds the "home_id" edge to the Match entity by IDs.
-func (tuo *TeamUpdateOne) AddHomeIDIDs(ids ...int) *TeamUpdateOne {
-	tuo.mutation.AddHomeIDIDs(ids...)
+// AddHomeMatchIDs adds the "home_matches" edge to the Match entity by IDs.
+func (tuo *TeamUpdateOne) AddHomeMatchIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.AddHomeMatchIDs(ids...)
 	return tuo
 }
 
-// AddHomeID adds the "home_id" edges to the Match entity.
-func (tuo *TeamUpdateOne) AddHomeID(m ...*Match) *TeamUpdateOne {
+// AddHomeMatches adds the "home_matches" edges to the Match entity.
+func (tuo *TeamUpdateOne) AddHomeMatches(m ...*Match) *TeamUpdateOne {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return tuo.AddHomeIDIDs(ids...)
+	return tuo.AddHomeMatchIDs(ids...)
 }
 
-// AddAwayIDIDs adds the "away_id" edge to the Match entity by IDs.
-func (tuo *TeamUpdateOne) AddAwayIDIDs(ids ...int) *TeamUpdateOne {
-	tuo.mutation.AddAwayIDIDs(ids...)
+// AddAwayMatchIDs adds the "away_matches" edge to the Match entity by IDs.
+func (tuo *TeamUpdateOne) AddAwayMatchIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.AddAwayMatchIDs(ids...)
 	return tuo
 }
 
-// AddAwayID adds the "away_id" edges to the Match entity.
-func (tuo *TeamUpdateOne) AddAwayID(m ...*Match) *TeamUpdateOne {
+// AddAwayMatches adds the "away_matches" edges to the Match entity.
+func (tuo *TeamUpdateOne) AddAwayMatches(m ...*Match) *TeamUpdateOne {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return tuo.AddAwayIDIDs(ids...)
+	return tuo.AddAwayMatchIDs(ids...)
 }
 
 // Mutation returns the TeamMutation object of the builder.
@@ -358,46 +358,46 @@ func (tuo *TeamUpdateOne) Mutation() *TeamMutation {
 	return tuo.mutation
 }
 
-// ClearHomeID clears all "home_id" edges to the Match entity.
-func (tuo *TeamUpdateOne) ClearHomeID() *TeamUpdateOne {
-	tuo.mutation.ClearHomeID()
+// ClearHomeMatches clears all "home_matches" edges to the Match entity.
+func (tuo *TeamUpdateOne) ClearHomeMatches() *TeamUpdateOne {
+	tuo.mutation.ClearHomeMatches()
 	return tuo
 }
 
-// RemoveHomeIDIDs removes the "home_id" edge to Match entities by IDs.
-func (tuo *TeamUpdateOne) RemoveHomeIDIDs(ids ...int) *TeamUpdateOne {
-	tuo.mutation.RemoveHomeIDIDs(ids...)
+// RemoveHomeMatchIDs removes the "home_matches" edge to Match entities by IDs.
+func (tuo *TeamUpdateOne) RemoveHomeMatchIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.RemoveHomeMatchIDs(ids...)
 	return tuo
 }
 
-// RemoveHomeID removes "home_id" edges to Match entities.
-func (tuo *TeamUpdateOne) RemoveHomeID(m ...*Match) *TeamUpdateOne {
+// RemoveHomeMatches removes "home_matches" edges to Match entities.
+func (tuo *TeamUpdateOne) RemoveHomeMatches(m ...*Match) *TeamUpdateOne {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return tuo.RemoveHomeIDIDs(ids...)
+	return tuo.RemoveHomeMatchIDs(ids...)
 }
 
-// ClearAwayID clears all "away_id" edges to the Match entity.
-func (tuo *TeamUpdateOne) ClearAwayID() *TeamUpdateOne {
-	tuo.mutation.ClearAwayID()
+// ClearAwayMatches clears all "away_matches" edges to the Match entity.
+func (tuo *TeamUpdateOne) ClearAwayMatches() *TeamUpdateOne {
+	tuo.mutation.ClearAwayMatches()
 	return tuo
 }
 
-// RemoveAwayIDIDs removes the "away_id" edge to Match entities by IDs.
-func (tuo *TeamUpdateOne) RemoveAwayIDIDs(ids ...int) *TeamUpdateOne {
-	tuo.mutation.RemoveAwayIDIDs(ids...)
+// RemoveAwayMatchIDs removes the "away_matches" edge to Match entities by IDs.
+func (tuo *TeamUpdateOne) RemoveAwayMatchIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.RemoveAwayMatchIDs(ids...)
 	return tuo
 }
 
-// RemoveAwayID removes "away_id" edges to Match entities.
-func (tuo *TeamUpdateOne) RemoveAwayID(m ...*Match) *TeamUpdateOne {
+// RemoveAwayMatches removes "away_matches" edges to Match entities.
+func (tuo *TeamUpdateOne) RemoveAwayMatches(m ...*Match) *TeamUpdateOne {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return tuo.RemoveAwayIDIDs(ids...)
+	return tuo.RemoveAwayMatchIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -503,12 +503,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 			Column: team.FieldName,
 		})
 	}
-	if tuo.mutation.HomeIDCleared() {
+	if tuo.mutation.HomeMatchesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.HomeIDTable,
-			Columns: []string{team.HomeIDColumn},
+			Inverse: true,
+			Table:   team.HomeMatchesTable,
+			Columns: []string{team.HomeMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -519,12 +519,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.RemovedHomeIDIDs(); len(nodes) > 0 && !tuo.mutation.HomeIDCleared() {
+	if nodes := tuo.mutation.RemovedHomeMatchesIDs(); len(nodes) > 0 && !tuo.mutation.HomeMatchesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.HomeIDTable,
-			Columns: []string{team.HomeIDColumn},
+			Inverse: true,
+			Table:   team.HomeMatchesTable,
+			Columns: []string{team.HomeMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -538,12 +538,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.HomeIDIDs(); len(nodes) > 0 {
+	if nodes := tuo.mutation.HomeMatchesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.HomeIDTable,
-			Columns: []string{team.HomeIDColumn},
+			Inverse: true,
+			Table:   team.HomeMatchesTable,
+			Columns: []string{team.HomeMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -557,12 +557,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tuo.mutation.AwayIDCleared() {
+	if tuo.mutation.AwayMatchesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.AwayIDTable,
-			Columns: []string{team.AwayIDColumn},
+			Inverse: true,
+			Table:   team.AwayMatchesTable,
+			Columns: []string{team.AwayMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -573,12 +573,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.RemovedAwayIDIDs(); len(nodes) > 0 && !tuo.mutation.AwayIDCleared() {
+	if nodes := tuo.mutation.RemovedAwayMatchesIDs(); len(nodes) > 0 && !tuo.mutation.AwayMatchesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.AwayIDTable,
-			Columns: []string{team.AwayIDColumn},
+			Inverse: true,
+			Table:   team.AwayMatchesTable,
+			Columns: []string{team.AwayMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -592,12 +592,12 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.AwayIDIDs(); len(nodes) > 0 {
+	if nodes := tuo.mutation.AwayMatchesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.AwayIDTable,
-			Columns: []string{team.AwayIDColumn},
+			Inverse: true,
+			Table:   team.AwayMatchesTable,
+			Columns: []string{team.AwayMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

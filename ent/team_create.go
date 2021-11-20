@@ -32,34 +32,34 @@ func (tc *TeamCreate) SetID(i int) *TeamCreate {
 	return tc
 }
 
-// AddHomeIDIDs adds the "home_id" edge to the Match entity by IDs.
-func (tc *TeamCreate) AddHomeIDIDs(ids ...int) *TeamCreate {
-	tc.mutation.AddHomeIDIDs(ids...)
+// AddHomeMatchIDs adds the "home_matches" edge to the Match entity by IDs.
+func (tc *TeamCreate) AddHomeMatchIDs(ids ...int) *TeamCreate {
+	tc.mutation.AddHomeMatchIDs(ids...)
 	return tc
 }
 
-// AddHomeID adds the "home_id" edges to the Match entity.
-func (tc *TeamCreate) AddHomeID(m ...*Match) *TeamCreate {
+// AddHomeMatches adds the "home_matches" edges to the Match entity.
+func (tc *TeamCreate) AddHomeMatches(m ...*Match) *TeamCreate {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return tc.AddHomeIDIDs(ids...)
+	return tc.AddHomeMatchIDs(ids...)
 }
 
-// AddAwayIDIDs adds the "away_id" edge to the Match entity by IDs.
-func (tc *TeamCreate) AddAwayIDIDs(ids ...int) *TeamCreate {
-	tc.mutation.AddAwayIDIDs(ids...)
+// AddAwayMatchIDs adds the "away_matches" edge to the Match entity by IDs.
+func (tc *TeamCreate) AddAwayMatchIDs(ids ...int) *TeamCreate {
+	tc.mutation.AddAwayMatchIDs(ids...)
 	return tc
 }
 
-// AddAwayID adds the "away_id" edges to the Match entity.
-func (tc *TeamCreate) AddAwayID(m ...*Match) *TeamCreate {
+// AddAwayMatches adds the "away_matches" edges to the Match entity.
+func (tc *TeamCreate) AddAwayMatches(m ...*Match) *TeamCreate {
 	ids := make([]int, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return tc.AddAwayIDIDs(ids...)
+	return tc.AddAwayMatchIDs(ids...)
 }
 
 // Mutation returns the TeamMutation object of the builder.
@@ -176,12 +176,12 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 		})
 		_node.Name = value
 	}
-	if nodes := tc.mutation.HomeIDIDs(); len(nodes) > 0 {
+	if nodes := tc.mutation.HomeMatchesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.HomeIDTable,
-			Columns: []string{team.HomeIDColumn},
+			Inverse: true,
+			Table:   team.HomeMatchesTable,
+			Columns: []string{team.HomeMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -195,12 +195,12 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := tc.mutation.AwayIDIDs(); len(nodes) > 0 {
+	if nodes := tc.mutation.AwayMatchesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   team.AwayIDTable,
-			Columns: []string{team.AwayIDColumn},
+			Inverse: true,
+			Table:   team.AwayMatchesTable,
+			Columns: []string{team.AwayMatchesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

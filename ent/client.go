@@ -221,6 +221,38 @@ func (c *MatchClient) GetX(ctx context.Context, id int) *Match {
 	return obj
 }
 
+// QueryHomeTeam queries the home_team edge of a Match.
+func (c *MatchClient) QueryHomeTeam(m *Match) *TeamQuery {
+	query := &TeamQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(match.Table, match.FieldID, id),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, match.HomeTeamTable, match.HomeTeamColumn),
+		)
+		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAwayTeam queries the away_team edge of a Match.
+func (c *MatchClient) QueryAwayTeam(m *Match) *TeamQuery {
+	query := &TeamQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(match.Table, match.FieldID, id),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, match.AwayTeamTable, match.AwayTeamColumn),
+		)
+		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *MatchClient) Hooks() []Hook {
 	return c.hooks.Match
@@ -311,15 +343,15 @@ func (c *TeamClient) GetX(ctx context.Context, id int) *Team {
 	return obj
 }
 
-// QueryHomeID queries the home_id edge of a Team.
-func (c *TeamClient) QueryHomeID(t *Team) *MatchQuery {
+// QueryHomeMatches queries the home_matches edge of a Team.
+func (c *TeamClient) QueryHomeMatches(t *Team) *MatchQuery {
 	query := &MatchQuery{config: c.config}
 	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
 		id := t.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, id),
 			sqlgraph.To(match.Table, match.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, team.HomeIDTable, team.HomeIDColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, team.HomeMatchesTable, team.HomeMatchesColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil
@@ -327,15 +359,15 @@ func (c *TeamClient) QueryHomeID(t *Team) *MatchQuery {
 	return query
 }
 
-// QueryAwayID queries the away_id edge of a Team.
-func (c *TeamClient) QueryAwayID(t *Team) *MatchQuery {
+// QueryAwayMatches queries the away_matches edge of a Team.
+func (c *TeamClient) QueryAwayMatches(t *Team) *MatchQuery {
 	query := &MatchQuery{config: c.config}
 	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
 		id := t.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, id),
 			sqlgraph.To(match.Table, match.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, team.AwayIDTable, team.AwayIDColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, team.AwayMatchesTable, team.AwayMatchesColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil

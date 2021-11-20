@@ -24,31 +24,31 @@ type Team struct {
 
 // TeamEdges holds the relations/edges for other nodes in the graph.
 type TeamEdges struct {
-	// HomeID holds the value of the home_id edge.
-	HomeID []*Match `json:"home_id,omitempty"`
-	// AwayID holds the value of the away_id edge.
-	AwayID []*Match `json:"away_id,omitempty"`
+	// HomeMatches holds the value of the home_matches edge.
+	HomeMatches []*Match `json:"home_matches,omitempty"`
+	// AwayMatches holds the value of the away_matches edge.
+	AwayMatches []*Match `json:"away_matches,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
 }
 
-// HomeIDOrErr returns the HomeID value or an error if the edge
+// HomeMatchesOrErr returns the HomeMatches value or an error if the edge
 // was not loaded in eager-loading.
-func (e TeamEdges) HomeIDOrErr() ([]*Match, error) {
+func (e TeamEdges) HomeMatchesOrErr() ([]*Match, error) {
 	if e.loadedTypes[0] {
-		return e.HomeID, nil
+		return e.HomeMatches, nil
 	}
-	return nil, &NotLoadedError{edge: "home_id"}
+	return nil, &NotLoadedError{edge: "home_matches"}
 }
 
-// AwayIDOrErr returns the AwayID value or an error if the edge
+// AwayMatchesOrErr returns the AwayMatches value or an error if the edge
 // was not loaded in eager-loading.
-func (e TeamEdges) AwayIDOrErr() ([]*Match, error) {
+func (e TeamEdges) AwayMatchesOrErr() ([]*Match, error) {
 	if e.loadedTypes[1] {
-		return e.AwayID, nil
+		return e.AwayMatches, nil
 	}
-	return nil, &NotLoadedError{edge: "away_id"}
+	return nil, &NotLoadedError{edge: "away_matches"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -92,14 +92,14 @@ func (t *Team) assignValues(columns []string, values []interface{}) error {
 	return nil
 }
 
-// QueryHomeID queries the "home_id" edge of the Team entity.
-func (t *Team) QueryHomeID() *MatchQuery {
-	return (&TeamClient{config: t.config}).QueryHomeID(t)
+// QueryHomeMatches queries the "home_matches" edge of the Team entity.
+func (t *Team) QueryHomeMatches() *MatchQuery {
+	return (&TeamClient{config: t.config}).QueryHomeMatches(t)
 }
 
-// QueryAwayID queries the "away_id" edge of the Team entity.
-func (t *Team) QueryAwayID() *MatchQuery {
-	return (&TeamClient{config: t.config}).QueryAwayID(t)
+// QueryAwayMatches queries the "away_matches" edge of the Team entity.
+func (t *Team) QueryAwayMatches() *MatchQuery {
+	return (&TeamClient{config: t.config}).QueryAwayMatches(t)
 }
 
 // Update returns a builder for updating this Team.

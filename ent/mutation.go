@@ -33,14 +33,18 @@ const (
 // MatchMutation represents an operation that mutates the Match nodes in the graph.
 type MatchMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	start_date    *time.Time
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Match, error)
-	predicates    []predicate.Match
+	op               Op
+	typ              string
+	id               *int
+	start_date       *time.Time
+	clearedFields    map[string]struct{}
+	home_team        *int
+	clearedhome_team bool
+	away_team        *int
+	clearedaway_team bool
+	done             bool
+	oldValue         func(context.Context) (*Match, error)
+	predicates       []predicate.Match
 }
 
 var _ ent.Mutation = (*MatchMutation)(nil)
@@ -164,6 +168,84 @@ func (m *MatchMutation) ResetStartDate() {
 	m.start_date = nil
 }
 
+// SetHomeTeamID sets the "home_team" edge to the Team entity by id.
+func (m *MatchMutation) SetHomeTeamID(id int) {
+	m.home_team = &id
+}
+
+// ClearHomeTeam clears the "home_team" edge to the Team entity.
+func (m *MatchMutation) ClearHomeTeam() {
+	m.clearedhome_team = true
+}
+
+// HomeTeamCleared reports if the "home_team" edge to the Team entity was cleared.
+func (m *MatchMutation) HomeTeamCleared() bool {
+	return m.clearedhome_team
+}
+
+// HomeTeamID returns the "home_team" edge ID in the mutation.
+func (m *MatchMutation) HomeTeamID() (id int, exists bool) {
+	if m.home_team != nil {
+		return *m.home_team, true
+	}
+	return
+}
+
+// HomeTeamIDs returns the "home_team" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// HomeTeamID instead. It exists only for internal usage by the builders.
+func (m *MatchMutation) HomeTeamIDs() (ids []int) {
+	if id := m.home_team; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetHomeTeam resets all changes to the "home_team" edge.
+func (m *MatchMutation) ResetHomeTeam() {
+	m.home_team = nil
+	m.clearedhome_team = false
+}
+
+// SetAwayTeamID sets the "away_team" edge to the Team entity by id.
+func (m *MatchMutation) SetAwayTeamID(id int) {
+	m.away_team = &id
+}
+
+// ClearAwayTeam clears the "away_team" edge to the Team entity.
+func (m *MatchMutation) ClearAwayTeam() {
+	m.clearedaway_team = true
+}
+
+// AwayTeamCleared reports if the "away_team" edge to the Team entity was cleared.
+func (m *MatchMutation) AwayTeamCleared() bool {
+	return m.clearedaway_team
+}
+
+// AwayTeamID returns the "away_team" edge ID in the mutation.
+func (m *MatchMutation) AwayTeamID() (id int, exists bool) {
+	if m.away_team != nil {
+		return *m.away_team, true
+	}
+	return
+}
+
+// AwayTeamIDs returns the "away_team" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// AwayTeamID instead. It exists only for internal usage by the builders.
+func (m *MatchMutation) AwayTeamIDs() (ids []int) {
+	if id := m.away_team; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetAwayTeam resets all changes to the "away_team" edge.
+func (m *MatchMutation) ResetAwayTeam() {
+	m.away_team = nil
+	m.clearedaway_team = false
+}
+
 // Where appends a list predicates to the MatchMutation builder.
 func (m *MatchMutation) Where(ps ...predicate.Match) {
 	m.predicates = append(m.predicates, ps...)
@@ -282,69 +364,115 @@ func (m *MatchMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *MatchMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.home_team != nil {
+		edges = append(edges, match.EdgeHomeTeam)
+	}
+	if m.away_team != nil {
+		edges = append(edges, match.EdgeAwayTeam)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *MatchMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case match.EdgeHomeTeam:
+		if id := m.home_team; id != nil {
+			return []ent.Value{*id}
+		}
+	case match.EdgeAwayTeam:
+		if id := m.away_team; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *MatchMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *MatchMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *MatchMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 2)
+	if m.clearedhome_team {
+		edges = append(edges, match.EdgeHomeTeam)
+	}
+	if m.clearedaway_team {
+		edges = append(edges, match.EdgeAwayTeam)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *MatchMutation) EdgeCleared(name string) bool {
+	switch name {
+	case match.EdgeHomeTeam:
+		return m.clearedhome_team
+	case match.EdgeAwayTeam:
+		return m.clearedaway_team
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *MatchMutation) ClearEdge(name string) error {
+	switch name {
+	case match.EdgeHomeTeam:
+		m.ClearHomeTeam()
+		return nil
+	case match.EdgeAwayTeam:
+		m.ClearAwayTeam()
+		return nil
+	}
 	return fmt.Errorf("unknown Match unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *MatchMutation) ResetEdge(name string) error {
+	switch name {
+	case match.EdgeHomeTeam:
+		m.ResetHomeTeam()
+		return nil
+	case match.EdgeAwayTeam:
+		m.ResetAwayTeam()
+		return nil
+	}
 	return fmt.Errorf("unknown Match edge %s", name)
 }
 
 // TeamMutation represents an operation that mutates the Team nodes in the graph.
 type TeamMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *int
-	name           *string
-	clearedFields  map[string]struct{}
-	home_id        map[int]struct{}
-	removedhome_id map[int]struct{}
-	clearedhome_id bool
-	away_id        map[int]struct{}
-	removedaway_id map[int]struct{}
-	clearedaway_id bool
-	done           bool
-	oldValue       func(context.Context) (*Team, error)
-	predicates     []predicate.Team
+	op                  Op
+	typ                 string
+	id                  *int
+	name                *string
+	clearedFields       map[string]struct{}
+	home_matches        map[int]struct{}
+	removedhome_matches map[int]struct{}
+	clearedhome_matches bool
+	away_matches        map[int]struct{}
+	removedaway_matches map[int]struct{}
+	clearedaway_matches bool
+	done                bool
+	oldValue            func(context.Context) (*Team, error)
+	predicates          []predicate.Team
 }
 
 var _ ent.Mutation = (*TeamMutation)(nil)
@@ -468,112 +596,112 @@ func (m *TeamMutation) ResetName() {
 	m.name = nil
 }
 
-// AddHomeIDIDs adds the "home_id" edge to the Match entity by ids.
-func (m *TeamMutation) AddHomeIDIDs(ids ...int) {
-	if m.home_id == nil {
-		m.home_id = make(map[int]struct{})
+// AddHomeMatchIDs adds the "home_matches" edge to the Match entity by ids.
+func (m *TeamMutation) AddHomeMatchIDs(ids ...int) {
+	if m.home_matches == nil {
+		m.home_matches = make(map[int]struct{})
 	}
 	for i := range ids {
-		m.home_id[ids[i]] = struct{}{}
+		m.home_matches[ids[i]] = struct{}{}
 	}
 }
 
-// ClearHomeID clears the "home_id" edge to the Match entity.
-func (m *TeamMutation) ClearHomeID() {
-	m.clearedhome_id = true
+// ClearHomeMatches clears the "home_matches" edge to the Match entity.
+func (m *TeamMutation) ClearHomeMatches() {
+	m.clearedhome_matches = true
 }
 
-// HomeIDCleared reports if the "home_id" edge to the Match entity was cleared.
-func (m *TeamMutation) HomeIDCleared() bool {
-	return m.clearedhome_id
+// HomeMatchesCleared reports if the "home_matches" edge to the Match entity was cleared.
+func (m *TeamMutation) HomeMatchesCleared() bool {
+	return m.clearedhome_matches
 }
 
-// RemoveHomeIDIDs removes the "home_id" edge to the Match entity by IDs.
-func (m *TeamMutation) RemoveHomeIDIDs(ids ...int) {
-	if m.removedhome_id == nil {
-		m.removedhome_id = make(map[int]struct{})
+// RemoveHomeMatchIDs removes the "home_matches" edge to the Match entity by IDs.
+func (m *TeamMutation) RemoveHomeMatchIDs(ids ...int) {
+	if m.removedhome_matches == nil {
+		m.removedhome_matches = make(map[int]struct{})
 	}
 	for i := range ids {
-		delete(m.home_id, ids[i])
-		m.removedhome_id[ids[i]] = struct{}{}
+		delete(m.home_matches, ids[i])
+		m.removedhome_matches[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedHomeID returns the removed IDs of the "home_id" edge to the Match entity.
-func (m *TeamMutation) RemovedHomeIDIDs() (ids []int) {
-	for id := range m.removedhome_id {
+// RemovedHomeMatches returns the removed IDs of the "home_matches" edge to the Match entity.
+func (m *TeamMutation) RemovedHomeMatchesIDs() (ids []int) {
+	for id := range m.removedhome_matches {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// HomeIDIDs returns the "home_id" edge IDs in the mutation.
-func (m *TeamMutation) HomeIDIDs() (ids []int) {
-	for id := range m.home_id {
+// HomeMatchesIDs returns the "home_matches" edge IDs in the mutation.
+func (m *TeamMutation) HomeMatchesIDs() (ids []int) {
+	for id := range m.home_matches {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetHomeID resets all changes to the "home_id" edge.
-func (m *TeamMutation) ResetHomeID() {
-	m.home_id = nil
-	m.clearedhome_id = false
-	m.removedhome_id = nil
+// ResetHomeMatches resets all changes to the "home_matches" edge.
+func (m *TeamMutation) ResetHomeMatches() {
+	m.home_matches = nil
+	m.clearedhome_matches = false
+	m.removedhome_matches = nil
 }
 
-// AddAwayIDIDs adds the "away_id" edge to the Match entity by ids.
-func (m *TeamMutation) AddAwayIDIDs(ids ...int) {
-	if m.away_id == nil {
-		m.away_id = make(map[int]struct{})
+// AddAwayMatchIDs adds the "away_matches" edge to the Match entity by ids.
+func (m *TeamMutation) AddAwayMatchIDs(ids ...int) {
+	if m.away_matches == nil {
+		m.away_matches = make(map[int]struct{})
 	}
 	for i := range ids {
-		m.away_id[ids[i]] = struct{}{}
+		m.away_matches[ids[i]] = struct{}{}
 	}
 }
 
-// ClearAwayID clears the "away_id" edge to the Match entity.
-func (m *TeamMutation) ClearAwayID() {
-	m.clearedaway_id = true
+// ClearAwayMatches clears the "away_matches" edge to the Match entity.
+func (m *TeamMutation) ClearAwayMatches() {
+	m.clearedaway_matches = true
 }
 
-// AwayIDCleared reports if the "away_id" edge to the Match entity was cleared.
-func (m *TeamMutation) AwayIDCleared() bool {
-	return m.clearedaway_id
+// AwayMatchesCleared reports if the "away_matches" edge to the Match entity was cleared.
+func (m *TeamMutation) AwayMatchesCleared() bool {
+	return m.clearedaway_matches
 }
 
-// RemoveAwayIDIDs removes the "away_id" edge to the Match entity by IDs.
-func (m *TeamMutation) RemoveAwayIDIDs(ids ...int) {
-	if m.removedaway_id == nil {
-		m.removedaway_id = make(map[int]struct{})
+// RemoveAwayMatchIDs removes the "away_matches" edge to the Match entity by IDs.
+func (m *TeamMutation) RemoveAwayMatchIDs(ids ...int) {
+	if m.removedaway_matches == nil {
+		m.removedaway_matches = make(map[int]struct{})
 	}
 	for i := range ids {
-		delete(m.away_id, ids[i])
-		m.removedaway_id[ids[i]] = struct{}{}
+		delete(m.away_matches, ids[i])
+		m.removedaway_matches[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedAwayID returns the removed IDs of the "away_id" edge to the Match entity.
-func (m *TeamMutation) RemovedAwayIDIDs() (ids []int) {
-	for id := range m.removedaway_id {
+// RemovedAwayMatches returns the removed IDs of the "away_matches" edge to the Match entity.
+func (m *TeamMutation) RemovedAwayMatchesIDs() (ids []int) {
+	for id := range m.removedaway_matches {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// AwayIDIDs returns the "away_id" edge IDs in the mutation.
-func (m *TeamMutation) AwayIDIDs() (ids []int) {
-	for id := range m.away_id {
+// AwayMatchesIDs returns the "away_matches" edge IDs in the mutation.
+func (m *TeamMutation) AwayMatchesIDs() (ids []int) {
+	for id := range m.away_matches {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetAwayID resets all changes to the "away_id" edge.
-func (m *TeamMutation) ResetAwayID() {
-	m.away_id = nil
-	m.clearedaway_id = false
-	m.removedaway_id = nil
+// ResetAwayMatches resets all changes to the "away_matches" edge.
+func (m *TeamMutation) ResetAwayMatches() {
+	m.away_matches = nil
+	m.clearedaway_matches = false
+	m.removedaway_matches = nil
 }
 
 // Where appends a list predicates to the TeamMutation builder.
@@ -695,11 +823,11 @@ func (m *TeamMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TeamMutation) AddedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.home_id != nil {
-		edges = append(edges, team.EdgeHomeID)
+	if m.home_matches != nil {
+		edges = append(edges, team.EdgeHomeMatches)
 	}
-	if m.away_id != nil {
-		edges = append(edges, team.EdgeAwayID)
+	if m.away_matches != nil {
+		edges = append(edges, team.EdgeAwayMatches)
 	}
 	return edges
 }
@@ -708,15 +836,15 @@ func (m *TeamMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *TeamMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case team.EdgeHomeID:
-		ids := make([]ent.Value, 0, len(m.home_id))
-		for id := range m.home_id {
+	case team.EdgeHomeMatches:
+		ids := make([]ent.Value, 0, len(m.home_matches))
+		for id := range m.home_matches {
 			ids = append(ids, id)
 		}
 		return ids
-	case team.EdgeAwayID:
-		ids := make([]ent.Value, 0, len(m.away_id))
-		for id := range m.away_id {
+	case team.EdgeAwayMatches:
+		ids := make([]ent.Value, 0, len(m.away_matches))
+		for id := range m.away_matches {
 			ids = append(ids, id)
 		}
 		return ids
@@ -727,11 +855,11 @@ func (m *TeamMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TeamMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.removedhome_id != nil {
-		edges = append(edges, team.EdgeHomeID)
+	if m.removedhome_matches != nil {
+		edges = append(edges, team.EdgeHomeMatches)
 	}
-	if m.removedaway_id != nil {
-		edges = append(edges, team.EdgeAwayID)
+	if m.removedaway_matches != nil {
+		edges = append(edges, team.EdgeAwayMatches)
 	}
 	return edges
 }
@@ -740,15 +868,15 @@ func (m *TeamMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *TeamMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case team.EdgeHomeID:
-		ids := make([]ent.Value, 0, len(m.removedhome_id))
-		for id := range m.removedhome_id {
+	case team.EdgeHomeMatches:
+		ids := make([]ent.Value, 0, len(m.removedhome_matches))
+		for id := range m.removedhome_matches {
 			ids = append(ids, id)
 		}
 		return ids
-	case team.EdgeAwayID:
-		ids := make([]ent.Value, 0, len(m.removedaway_id))
-		for id := range m.removedaway_id {
+	case team.EdgeAwayMatches:
+		ids := make([]ent.Value, 0, len(m.removedaway_matches))
+		for id := range m.removedaway_matches {
 			ids = append(ids, id)
 		}
 		return ids
@@ -759,11 +887,11 @@ func (m *TeamMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TeamMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.clearedhome_id {
-		edges = append(edges, team.EdgeHomeID)
+	if m.clearedhome_matches {
+		edges = append(edges, team.EdgeHomeMatches)
 	}
-	if m.clearedaway_id {
-		edges = append(edges, team.EdgeAwayID)
+	if m.clearedaway_matches {
+		edges = append(edges, team.EdgeAwayMatches)
 	}
 	return edges
 }
@@ -772,10 +900,10 @@ func (m *TeamMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *TeamMutation) EdgeCleared(name string) bool {
 	switch name {
-	case team.EdgeHomeID:
-		return m.clearedhome_id
-	case team.EdgeAwayID:
-		return m.clearedaway_id
+	case team.EdgeHomeMatches:
+		return m.clearedhome_matches
+	case team.EdgeAwayMatches:
+		return m.clearedaway_matches
 	}
 	return false
 }
@@ -792,11 +920,11 @@ func (m *TeamMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *TeamMutation) ResetEdge(name string) error {
 	switch name {
-	case team.EdgeHomeID:
-		m.ResetHomeID()
+	case team.EdgeHomeMatches:
+		m.ResetHomeMatches()
 		return nil
-	case team.EdgeAwayID:
-		m.ResetAwayID()
+	case team.EdgeAwayMatches:
+		m.ResetAwayMatches()
 		return nil
 	}
 	return fmt.Errorf("unknown Team edge %s", name)

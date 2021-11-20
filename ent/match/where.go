@@ -7,6 +7,7 @@ import (
 
 	"entgo.io/bug/ent/predicate"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -172,6 +173,62 @@ func StartDateLT(v time.Time) predicate.Match {
 func StartDateLTE(v time.Time) predicate.Match {
 	return predicate.Match(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldStartDate), v))
+	})
+}
+
+// HasHomeTeam applies the HasEdge predicate on the "home_team" edge.
+func HasHomeTeam() predicate.Match {
+	return predicate.Match(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(HomeTeamTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, HomeTeamTable, HomeTeamColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasHomeTeamWith applies the HasEdge predicate on the "home_team" edge with a given conditions (other predicates).
+func HasHomeTeamWith(preds ...predicate.Team) predicate.Match {
+	return predicate.Match(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(HomeTeamInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, HomeTeamTable, HomeTeamColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAwayTeam applies the HasEdge predicate on the "away_team" edge.
+func HasAwayTeam() predicate.Match {
+	return predicate.Match(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(AwayTeamTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, AwayTeamTable, AwayTeamColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAwayTeamWith applies the HasEdge predicate on the "away_team" edge with a given conditions (other predicates).
+func HasAwayTeamWith(preds ...predicate.Team) predicate.Match {
+	return predicate.Match(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(AwayTeamInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, AwayTeamTable, AwayTeamColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	})
 }
 

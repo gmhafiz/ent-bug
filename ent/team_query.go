@@ -27,8 +27,8 @@ type TeamQuery struct {
 	fields     []string
 	predicates []predicate.Team
 	// eager-loading edges.
-	withHomeID *MatchQuery
-	withAwayID *MatchQuery
+	withHomeMatches *MatchQuery
+	withAwayMatches *MatchQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -65,8 +65,8 @@ func (tq *TeamQuery) Order(o ...OrderFunc) *TeamQuery {
 	return tq
 }
 
-// QueryHomeID chains the current query on the "home_id" edge.
-func (tq *TeamQuery) QueryHomeID() *MatchQuery {
+// QueryHomeMatches chains the current query on the "home_matches" edge.
+func (tq *TeamQuery) QueryHomeMatches() *MatchQuery {
 	query := &MatchQuery{config: tq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := tq.prepareQuery(ctx); err != nil {
@@ -79,7 +79,7 @@ func (tq *TeamQuery) QueryHomeID() *MatchQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, selector),
 			sqlgraph.To(match.Table, match.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, team.HomeIDTable, team.HomeIDColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, team.HomeMatchesTable, team.HomeMatchesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -87,8 +87,8 @@ func (tq *TeamQuery) QueryHomeID() *MatchQuery {
 	return query
 }
 
-// QueryAwayID chains the current query on the "away_id" edge.
-func (tq *TeamQuery) QueryAwayID() *MatchQuery {
+// QueryAwayMatches chains the current query on the "away_matches" edge.
+func (tq *TeamQuery) QueryAwayMatches() *MatchQuery {
 	query := &MatchQuery{config: tq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := tq.prepareQuery(ctx); err != nil {
@@ -101,7 +101,7 @@ func (tq *TeamQuery) QueryAwayID() *MatchQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(team.Table, team.FieldID, selector),
 			sqlgraph.To(match.Table, match.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, team.AwayIDTable, team.AwayIDColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, team.AwayMatchesTable, team.AwayMatchesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -285,38 +285,38 @@ func (tq *TeamQuery) Clone() *TeamQuery {
 		return nil
 	}
 	return &TeamQuery{
-		config:     tq.config,
-		limit:      tq.limit,
-		offset:     tq.offset,
-		order:      append([]OrderFunc{}, tq.order...),
-		predicates: append([]predicate.Team{}, tq.predicates...),
-		withHomeID: tq.withHomeID.Clone(),
-		withAwayID: tq.withAwayID.Clone(),
+		config:          tq.config,
+		limit:           tq.limit,
+		offset:          tq.offset,
+		order:           append([]OrderFunc{}, tq.order...),
+		predicates:      append([]predicate.Team{}, tq.predicates...),
+		withHomeMatches: tq.withHomeMatches.Clone(),
+		withAwayMatches: tq.withAwayMatches.Clone(),
 		// clone intermediate query.
 		sql:  tq.sql.Clone(),
 		path: tq.path,
 	}
 }
 
-// WithHomeID tells the query-builder to eager-load the nodes that are connected to
-// the "home_id" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TeamQuery) WithHomeID(opts ...func(*MatchQuery)) *TeamQuery {
+// WithHomeMatches tells the query-builder to eager-load the nodes that are connected to
+// the "home_matches" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TeamQuery) WithHomeMatches(opts ...func(*MatchQuery)) *TeamQuery {
 	query := &MatchQuery{config: tq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
-	tq.withHomeID = query
+	tq.withHomeMatches = query
 	return tq
 }
 
-// WithAwayID tells the query-builder to eager-load the nodes that are connected to
-// the "away_id" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *TeamQuery) WithAwayID(opts ...func(*MatchQuery)) *TeamQuery {
+// WithAwayMatches tells the query-builder to eager-load the nodes that are connected to
+// the "away_matches" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TeamQuery) WithAwayMatches(opts ...func(*MatchQuery)) *TeamQuery {
 	query := &MatchQuery{config: tq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
-	tq.withAwayID = query
+	tq.withAwayMatches = query
 	return tq
 }
 
@@ -386,8 +386,8 @@ func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
 		nodes       = []*Team{}
 		_spec       = tq.querySpec()
 		loadedTypes = [2]bool{
-			tq.withHomeID != nil,
-			tq.withAwayID != nil,
+			tq.withHomeMatches != nil,
+			tq.withAwayMatches != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -410,61 +410,61 @@ func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
 		return nodes, nil
 	}
 
-	if query := tq.withHomeID; query != nil {
+	if query := tq.withHomeMatches; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
 		nodeids := make(map[int]*Team)
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
-			nodes[i].Edges.HomeID = []*Match{}
+			nodes[i].Edges.HomeMatches = []*Match{}
 		}
 		query.withFKs = true
 		query.Where(predicate.Match(func(s *sql.Selector) {
-			s.Where(sql.InValues(team.HomeIDColumn, fks...))
+			s.Where(sql.InValues(team.HomeMatchesColumn, fks...))
 		}))
 		neighbors, err := query.All(ctx)
 		if err != nil {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.team_home_id
+			fk := n.match_home_team
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "team_home_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "match_home_team" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "team_home_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "match_home_team" returned %v for node %v`, *fk, n.ID)
 			}
-			node.Edges.HomeID = append(node.Edges.HomeID, n)
+			node.Edges.HomeMatches = append(node.Edges.HomeMatches, n)
 		}
 	}
 
-	if query := tq.withAwayID; query != nil {
+	if query := tq.withAwayMatches; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
 		nodeids := make(map[int]*Team)
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
-			nodes[i].Edges.AwayID = []*Match{}
+			nodes[i].Edges.AwayMatches = []*Match{}
 		}
 		query.withFKs = true
 		query.Where(predicate.Match(func(s *sql.Selector) {
-			s.Where(sql.InValues(team.AwayIDColumn, fks...))
+			s.Where(sql.InValues(team.AwayMatchesColumn, fks...))
 		}))
 		neighbors, err := query.All(ctx)
 		if err != nil {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.team_away_id
+			fk := n.match_away_team
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "team_away_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "match_away_team" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "team_away_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "match_away_team" returned %v for node %v`, *fk, n.ID)
 			}
-			node.Edges.AwayID = append(node.Edges.AwayID, n)
+			node.Edges.AwayMatches = append(node.Edges.AwayMatches, n)
 		}
 	}
 

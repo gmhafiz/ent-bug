@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/bug/ent/match"
 	"entgo.io/bug/ent/predicate"
+	"entgo.io/bug/ent/team"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -24,7 +25,10 @@ type MatchQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Match
-	withFKs    bool
+	// eager-loading edges.
+	withHomeTeam *TeamQuery
+	withAwayTeam *TeamQuery
+	withFKs      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -59,6 +63,50 @@ func (mq *MatchQuery) Unique(unique bool) *MatchQuery {
 func (mq *MatchQuery) Order(o ...OrderFunc) *MatchQuery {
 	mq.order = append(mq.order, o...)
 	return mq
+}
+
+// QueryHomeTeam chains the current query on the "home_team" edge.
+func (mq *MatchQuery) QueryHomeTeam() *TeamQuery {
+	query := &TeamQuery{config: mq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(match.Table, match.FieldID, selector),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, match.HomeTeamTable, match.HomeTeamColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAwayTeam chains the current query on the "away_team" edge.
+func (mq *MatchQuery) QueryAwayTeam() *TeamQuery {
+	query := &TeamQuery{config: mq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(match.Table, match.FieldID, selector),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, match.AwayTeamTable, match.AwayTeamColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Match entity from the query.
@@ -237,15 +285,39 @@ func (mq *MatchQuery) Clone() *MatchQuery {
 		return nil
 	}
 	return &MatchQuery{
-		config:     mq.config,
-		limit:      mq.limit,
-		offset:     mq.offset,
-		order:      append([]OrderFunc{}, mq.order...),
-		predicates: append([]predicate.Match{}, mq.predicates...),
+		config:       mq.config,
+		limit:        mq.limit,
+		offset:       mq.offset,
+		order:        append([]OrderFunc{}, mq.order...),
+		predicates:   append([]predicate.Match{}, mq.predicates...),
+		withHomeTeam: mq.withHomeTeam.Clone(),
+		withAwayTeam: mq.withAwayTeam.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
 	}
+}
+
+// WithHomeTeam tells the query-builder to eager-load the nodes that are connected to
+// the "home_team" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MatchQuery) WithHomeTeam(opts ...func(*TeamQuery)) *MatchQuery {
+	query := &TeamQuery{config: mq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withHomeTeam = query
+	return mq
+}
+
+// WithAwayTeam tells the query-builder to eager-load the nodes that are connected to
+// the "away_team" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MatchQuery) WithAwayTeam(opts ...func(*TeamQuery)) *MatchQuery {
+	query := &TeamQuery{config: mq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withAwayTeam = query
+	return mq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -311,10 +383,17 @@ func (mq *MatchQuery) prepareQuery(ctx context.Context) error {
 
 func (mq *MatchQuery) sqlAll(ctx context.Context) ([]*Match, error) {
 	var (
-		nodes   = []*Match{}
-		withFKs = mq.withFKs
-		_spec   = mq.querySpec()
+		nodes       = []*Match{}
+		withFKs     = mq.withFKs
+		_spec       = mq.querySpec()
+		loadedTypes = [2]bool{
+			mq.withHomeTeam != nil,
+			mq.withAwayTeam != nil,
+		}
 	)
+	if mq.withHomeTeam != nil || mq.withAwayTeam != nil {
+		withFKs = true
+	}
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, match.ForeignKeys...)
 	}
@@ -328,6 +407,7 @@ func (mq *MatchQuery) sqlAll(ctx context.Context) ([]*Match, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	if err := sqlgraph.QueryNodes(ctx, mq.driver, _spec); err != nil {
@@ -336,6 +416,65 @@ func (mq *MatchQuery) sqlAll(ctx context.Context) ([]*Match, error) {
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := mq.withHomeTeam; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Match)
+		for i := range nodes {
+			if nodes[i].match_home_team == nil {
+				continue
+			}
+			fk := *nodes[i].match_home_team
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(team.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "match_home_team" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.HomeTeam = n
+			}
+		}
+	}
+
+	if query := mq.withAwayTeam; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Match)
+		for i := range nodes {
+			if nodes[i].match_away_team == nil {
+				continue
+			}
+			fk := *nodes[i].match_away_team
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
+		}
+		query.Where(team.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "match_away_team" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.AwayTeam = n
+			}
+		}
+	}
+
 	return nodes, nil
 }
 

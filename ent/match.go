@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"entgo.io/bug/ent/match"
+	"entgo.io/bug/ent/team"
 	"entgo.io/ent/dialect/sql"
 )
 
@@ -17,9 +18,51 @@ type Match struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// StartDate holds the value of the "start_date" field.
-	StartDate    time.Time `json:"start_date,omitempty"`
-	team_home_id *int
-	team_away_id *int
+	StartDate time.Time `json:"start_date,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the MatchQuery when eager-loading is set.
+	Edges           MatchEdges `json:"edges"`
+	match_home_team *int
+	match_away_team *int
+}
+
+// MatchEdges holds the relations/edges for other nodes in the graph.
+type MatchEdges struct {
+	// HomeTeam holds the value of the home_team edge.
+	HomeTeam *Team `json:"home_team,omitempty"`
+	// AwayTeam holds the value of the away_team edge.
+	AwayTeam *Team `json:"away_team,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// HomeTeamOrErr returns the HomeTeam value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MatchEdges) HomeTeamOrErr() (*Team, error) {
+	if e.loadedTypes[0] {
+		if e.HomeTeam == nil {
+			// The edge home_team was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: team.Label}
+		}
+		return e.HomeTeam, nil
+	}
+	return nil, &NotLoadedError{edge: "home_team"}
+}
+
+// AwayTeamOrErr returns the AwayTeam value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MatchEdges) AwayTeamOrErr() (*Team, error) {
+	if e.loadedTypes[1] {
+		if e.AwayTeam == nil {
+			// The edge away_team was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: team.Label}
+		}
+		return e.AwayTeam, nil
+	}
+	return nil, &NotLoadedError{edge: "away_team"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -31,9 +74,9 @@ func (*Match) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullInt64)
 		case match.FieldStartDate:
 			values[i] = new(sql.NullTime)
-		case match.ForeignKeys[0]: // team_home_id
+		case match.ForeignKeys[0]: // match_home_team
 			values[i] = new(sql.NullInt64)
-		case match.ForeignKeys[1]: // team_away_id
+		case match.ForeignKeys[1]: // match_away_team
 			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Match", columns[i])
@@ -64,21 +107,31 @@ func (m *Match) assignValues(columns []string, values []interface{}) error {
 			}
 		case match.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field team_home_id", value)
+				return fmt.Errorf("unexpected type %T for edge-field match_home_team", value)
 			} else if value.Valid {
-				m.team_home_id = new(int)
-				*m.team_home_id = int(value.Int64)
+				m.match_home_team = new(int)
+				*m.match_home_team = int(value.Int64)
 			}
 		case match.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field team_away_id", value)
+				return fmt.Errorf("unexpected type %T for edge-field match_away_team", value)
 			} else if value.Valid {
-				m.team_away_id = new(int)
-				*m.team_away_id = int(value.Int64)
+				m.match_away_team = new(int)
+				*m.match_away_team = int(value.Int64)
 			}
 		}
 	}
 	return nil
+}
+
+// QueryHomeTeam queries the "home_team" edge of the Match entity.
+func (m *Match) QueryHomeTeam() *TeamQuery {
+	return (&MatchClient{config: m.config}).QueryHomeTeam(m)
+}
+
+// QueryAwayTeam queries the "away_team" edge of the Match entity.
+func (m *Match) QueryAwayTeam() *TeamQuery {
+	return (&MatchClient{config: m.config}).QueryAwayTeam(m)
 }
 
 // Update returns a builder for updating this Match.

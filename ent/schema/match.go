@@ -21,11 +21,11 @@ func (Match) Fields() []ent.Field {
 
 // Edges of the Match.
 func (Match) Edges() []ent.Edge {
-	return nil
+	//return nil
 
 	// Rotem suggestion
 	return []ent.Edge{
-		edge.To("home_team", Team.Type),
-		edge.To("away_team", Team.Type),
+		edge.To("home_team", Team.Type).Unique(),
+		edge.To("away_team", Team.Type).Unique(),
 	}
 }

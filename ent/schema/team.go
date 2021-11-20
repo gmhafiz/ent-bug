@@ -21,10 +21,10 @@ func (Team) Fields() []ent.Field {
 
 // Edges of the Team.
 func (Team) Edges() []ent.Edge {
-	return []ent.Edge{
-		edge.To("home_id", Match.Type),
-		edge.To("away_id", Match.Type),
-	}
+	//return []ent.Edge{
+	//	edge.To("home_id", Match.Type),
+	//	edge.To("away_id", Match.Type),
+	//}
 
 	// Rotem suggestion
 	return []ent.Edge{

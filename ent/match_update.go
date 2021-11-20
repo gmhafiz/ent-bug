@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/bug/ent/match"
 	"entgo.io/bug/ent/predicate"
+	"entgo.io/bug/ent/team"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -34,9 +35,59 @@ func (mu *MatchUpdate) SetStartDate(t time.Time) *MatchUpdate {
 	return mu
 }
 
+// SetHomeTeamID sets the "home_team" edge to the Team entity by ID.
+func (mu *MatchUpdate) SetHomeTeamID(id int) *MatchUpdate {
+	mu.mutation.SetHomeTeamID(id)
+	return mu
+}
+
+// SetNillableHomeTeamID sets the "home_team" edge to the Team entity by ID if the given value is not nil.
+func (mu *MatchUpdate) SetNillableHomeTeamID(id *int) *MatchUpdate {
+	if id != nil {
+		mu = mu.SetHomeTeamID(*id)
+	}
+	return mu
+}
+
+// SetHomeTeam sets the "home_team" edge to the Team entity.
+func (mu *MatchUpdate) SetHomeTeam(t *Team) *MatchUpdate {
+	return mu.SetHomeTeamID(t.ID)
+}
+
+// SetAwayTeamID sets the "away_team" edge to the Team entity by ID.
+func (mu *MatchUpdate) SetAwayTeamID(id int) *MatchUpdate {
+	mu.mutation.SetAwayTeamID(id)
+	return mu
+}
+
+// SetNillableAwayTeamID sets the "away_team" edge to the Team entity by ID if the given value is not nil.
+func (mu *MatchUpdate) SetNillableAwayTeamID(id *int) *MatchUpdate {
+	if id != nil {
+		mu = mu.SetAwayTeamID(*id)
+	}
+	return mu
+}
+
+// SetAwayTeam sets the "away_team" edge to the Team entity.
+func (mu *MatchUpdate) SetAwayTeam(t *Team) *MatchUpdate {
+	return mu.SetAwayTeamID(t.ID)
+}
+
 // Mutation returns the MatchMutation object of the builder.
 func (mu *MatchUpdate) Mutation() *MatchMutation {
 	return mu.mutation
+}
+
+// ClearHomeTeam clears the "home_team" edge to the Team entity.
+func (mu *MatchUpdate) ClearHomeTeam() *MatchUpdate {
+	mu.mutation.ClearHomeTeam()
+	return mu
+}
+
+// ClearAwayTeam clears the "away_team" edge to the Team entity.
+func (mu *MatchUpdate) ClearAwayTeam() *MatchUpdate {
+	mu.mutation.ClearAwayTeam()
+	return mu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -118,6 +169,76 @@ func (mu *MatchUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: match.FieldStartDate,
 		})
 	}
+	if mu.mutation.HomeTeamCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   match.HomeTeamTable,
+			Columns: []string{match.HomeTeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: team.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.HomeTeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   match.HomeTeamTable,
+			Columns: []string{match.HomeTeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: team.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if mu.mutation.AwayTeamCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   match.AwayTeamTable,
+			Columns: []string{match.AwayTeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: team.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.AwayTeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   match.AwayTeamTable,
+			Columns: []string{match.AwayTeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: team.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, mu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{match.Label}
@@ -143,9 +264,59 @@ func (muo *MatchUpdateOne) SetStartDate(t time.Time) *MatchUpdateOne {
 	return muo
 }
 
+// SetHomeTeamID sets the "home_team" edge to the Team entity by ID.
+func (muo *MatchUpdateOne) SetHomeTeamID(id int) *MatchUpdateOne {
+	muo.mutation.SetHomeTeamID(id)
+	return muo
+}
+
+// SetNillableHomeTeamID sets the "home_team" edge to the Team entity by ID if the given value is not nil.
+func (muo *MatchUpdateOne) SetNillableHomeTeamID(id *int) *MatchUpdateOne {
+	if id != nil {
+		muo = muo.SetHomeTeamID(*id)
+	}
+	return muo
+}
+
+// SetHomeTeam sets the "home_team" edge to the Team entity.
+func (muo *MatchUpdateOne) SetHomeTeam(t *Team) *MatchUpdateOne {
+	return muo.SetHomeTeamID(t.ID)
+}
+
+// SetAwayTeamID sets the "away_team" edge to the Team entity by ID.
+func (muo *MatchUpdateOne) SetAwayTeamID(id int) *MatchUpdateOne {
+	muo.mutation.SetAwayTeamID(id)
+	return muo
+}
+
+// SetNillableAwayTeamID sets the "away_team" edge to the Team entity by ID if the given value is not nil.
+func (muo *MatchUpdateOne) SetNillableAwayTeamID(id *int) *MatchUpdateOne {
+	if id != nil {
+		muo = muo.SetAwayTeamID(*id)
+	}
+	return muo
+}
+
+// SetAwayTeam sets the "away_team" edge to the Team entity.
+func (muo *MatchUpdateOne) SetAwayTeam(t *Team) *MatchUpdateOne {
+	return muo.SetAwayTeamID(t.ID)
+}
+
 // Mutation returns the MatchMutation object of the builder.
 func (muo *MatchUpdateOne) Mutation() *MatchMutation {
 	return muo.mutation
+}
+
+// ClearHomeTeam clears the "home_team" edge to the Team entity.
+func (muo *MatchUpdateOne) ClearHomeTeam() *MatchUpdateOne {
+	muo.mutation.ClearHomeTeam()
+	return muo
+}
+
+// ClearAwayTeam clears the "away_team" edge to the Team entity.
+func (muo *MatchUpdateOne) ClearAwayTeam() *MatchUpdateOne {
+	muo.mutation.ClearAwayTeam()
+	return muo
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -250,6 +421,76 @@ func (muo *MatchUpdateOne) sqlSave(ctx context.Context) (_node *Match, err error
 			Value:  value,
 			Column: match.FieldStartDate,
 		})
+	}
+	if muo.mutation.HomeTeamCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   match.HomeTeamTable,
+			Columns: []string{match.HomeTeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: team.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.HomeTeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   match.HomeTeamTable,
+			Columns: []string{match.HomeTeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: team.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if muo.mutation.AwayTeamCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   match.AwayTeamTable,
+			Columns: []string{match.AwayTeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: team.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.AwayTeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   match.AwayTeamTable,
+			Columns: []string{match.AwayTeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: team.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Match{config: muo.config}
 	_spec.Assign = _node.assignValues

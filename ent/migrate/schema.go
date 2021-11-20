@@ -12,8 +12,8 @@ var (
 	MatchesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "start_date", Type: field.TypeTime},
-		{Name: "team_home_id", Type: field.TypeInt, Nullable: true},
-		{Name: "team_away_id", Type: field.TypeInt, Nullable: true},
+		{Name: "match_home_team", Type: field.TypeInt, Nullable: true},
+		{Name: "match_away_team", Type: field.TypeInt, Nullable: true},
 	}
 	// MatchesTable holds the schema information for the "matches" table.
 	MatchesTable = &schema.Table{
@@ -22,13 +22,13 @@ var (
 		PrimaryKey: []*schema.Column{MatchesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "matches_teams_home_id",
+				Symbol:     "matches_teams_home_team",
 				Columns:    []*schema.Column{MatchesColumns[2]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "matches_teams_away_id",
+				Symbol:     "matches_teams_away_team",
 				Columns:    []*schema.Column{MatchesColumns[3]},
 				RefColumns: []*schema.Column{TeamsColumns[0]},
 				OnDelete:   schema.SetNull,

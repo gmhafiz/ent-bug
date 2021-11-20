@@ -68,6 +68,8 @@ func test(t *testing.T, client *ent.Client) {
 	assert.NoError(t, err)
 	match, err := client.Match.Create().
 		SetStartDate(time.Now()).
+		SetHomeTeamID(teamA.ID).
+		SetAwayTeamID(teamB.ID).
 		Save(ctx)
 	assert.NoError(t, err)
 

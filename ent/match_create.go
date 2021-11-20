@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"entgo.io/bug/ent/match"
+	"entgo.io/bug/ent/team"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
@@ -30,6 +31,44 @@ func (mc *MatchCreate) SetStartDate(t time.Time) *MatchCreate {
 func (mc *MatchCreate) SetID(i int) *MatchCreate {
 	mc.mutation.SetID(i)
 	return mc
+}
+
+// SetHomeTeamID sets the "home_team" edge to the Team entity by ID.
+func (mc *MatchCreate) SetHomeTeamID(id int) *MatchCreate {
+	mc.mutation.SetHomeTeamID(id)
+	return mc
+}
+
+// SetNillableHomeTeamID sets the "home_team" edge to the Team entity by ID if the given value is not nil.
+func (mc *MatchCreate) SetNillableHomeTeamID(id *int) *MatchCreate {
+	if id != nil {
+		mc = mc.SetHomeTeamID(*id)
+	}
+	return mc
+}
+
+// SetHomeTeam sets the "home_team" edge to the Team entity.
+func (mc *MatchCreate) SetHomeTeam(t *Team) *MatchCreate {
+	return mc.SetHomeTeamID(t.ID)
+}
+
+// SetAwayTeamID sets the "away_team" edge to the Team entity by ID.
+func (mc *MatchCreate) SetAwayTeamID(id int) *MatchCreate {
+	mc.mutation.SetAwayTeamID(id)
+	return mc
+}
+
+// SetNillableAwayTeamID sets the "away_team" edge to the Team entity by ID if the given value is not nil.
+func (mc *MatchCreate) SetNillableAwayTeamID(id *int) *MatchCreate {
+	if id != nil {
+		mc = mc.SetAwayTeamID(*id)
+	}
+	return mc
+}
+
+// SetAwayTeam sets the "away_team" edge to the Team entity.
+func (mc *MatchCreate) SetAwayTeam(t *Team) *MatchCreate {
+	return mc.SetAwayTeamID(t.ID)
 }
 
 // Mutation returns the MatchMutation object of the builder.
@@ -145,6 +184,46 @@ func (mc *MatchCreate) createSpec() (*Match, *sqlgraph.CreateSpec) {
 			Column: match.FieldStartDate,
 		})
 		_node.StartDate = value
+	}
+	if nodes := mc.mutation.HomeTeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   match.HomeTeamTable,
+			Columns: []string{match.HomeTeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: team.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.match_home_team = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := mc.mutation.AwayTeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   match.AwayTeamTable,
+			Columns: []string{match.AwayTeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: team.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.match_away_team = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

@@ -209,25 +209,25 @@ func NameContainsFold(v string) predicate.Team {
 	})
 }
 
-// HasHomeID applies the HasEdge predicate on the "home_id" edge.
-func HasHomeID() predicate.Team {
+// HasHomeMatches applies the HasEdge predicate on the "home_matches" edge.
+func HasHomeMatches() predicate.Team {
 	return predicate.Team(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(HomeIDTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, HomeIDTable, HomeIDColumn),
+			sqlgraph.To(HomeMatchesTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, HomeMatchesTable, HomeMatchesColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasHomeIDWith applies the HasEdge predicate on the "home_id" edge with a given conditions (other predicates).
-func HasHomeIDWith(preds ...predicate.Match) predicate.Team {
+// HasHomeMatchesWith applies the HasEdge predicate on the "home_matches" edge with a given conditions (other predicates).
+func HasHomeMatchesWith(preds ...predicate.Match) predicate.Team {
 	return predicate.Team(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(HomeIDInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, HomeIDTable, HomeIDColumn),
+			sqlgraph.To(HomeMatchesInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, HomeMatchesTable, HomeMatchesColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
@@ -237,25 +237,25 @@ func HasHomeIDWith(preds ...predicate.Match) predicate.Team {
 	})
 }
 
-// HasAwayID applies the HasEdge predicate on the "away_id" edge.
-func HasAwayID() predicate.Team {
+// HasAwayMatches applies the HasEdge predicate on the "away_matches" edge.
+func HasAwayMatches() predicate.Team {
 	return predicate.Team(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(AwayIDTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, AwayIDTable, AwayIDColumn),
+			sqlgraph.To(AwayMatchesTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, AwayMatchesTable, AwayMatchesColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasAwayIDWith applies the HasEdge predicate on the "away_id" edge with a given conditions (other predicates).
-func HasAwayIDWith(preds ...predicate.Match) predicate.Team {
+// HasAwayMatchesWith applies the HasEdge predicate on the "away_matches" edge with a given conditions (other predicates).
+func HasAwayMatchesWith(preds ...predicate.Match) predicate.Team {
 	return predicate.Team(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(AwayIDInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, AwayIDTable, AwayIDColumn),
+			sqlgraph.To(AwayMatchesInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, AwayMatchesTable, AwayMatchesColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

@@ -9,26 +9,26 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// EdgeHomeID holds the string denoting the home_id edge name in mutations.
-	EdgeHomeID = "home_id"
-	// EdgeAwayID holds the string denoting the away_id edge name in mutations.
-	EdgeAwayID = "away_id"
+	// EdgeHomeMatches holds the string denoting the home_matches edge name in mutations.
+	EdgeHomeMatches = "home_matches"
+	// EdgeAwayMatches holds the string denoting the away_matches edge name in mutations.
+	EdgeAwayMatches = "away_matches"
 	// Table holds the table name of the team in the database.
 	Table = "teams"
-	// HomeIDTable is the table that holds the home_id relation/edge.
-	HomeIDTable = "matches"
-	// HomeIDInverseTable is the table name for the Match entity.
+	// HomeMatchesTable is the table that holds the home_matches relation/edge.
+	HomeMatchesTable = "matches"
+	// HomeMatchesInverseTable is the table name for the Match entity.
 	// It exists in this package in order to avoid circular dependency with the "match" package.
-	HomeIDInverseTable = "matches"
-	// HomeIDColumn is the table column denoting the home_id relation/edge.
-	HomeIDColumn = "team_home_id"
-	// AwayIDTable is the table that holds the away_id relation/edge.
-	AwayIDTable = "matches"
-	// AwayIDInverseTable is the table name for the Match entity.
+	HomeMatchesInverseTable = "matches"
+	// HomeMatchesColumn is the table column denoting the home_matches relation/edge.
+	HomeMatchesColumn = "match_home_team"
+	// AwayMatchesTable is the table that holds the away_matches relation/edge.
+	AwayMatchesTable = "matches"
+	// AwayMatchesInverseTable is the table name for the Match entity.
 	// It exists in this package in order to avoid circular dependency with the "match" package.
-	AwayIDInverseTable = "matches"
-	// AwayIDColumn is the table column denoting the away_id relation/edge.
-	AwayIDColumn = "team_away_id"
+	AwayMatchesInverseTable = "matches"
+	// AwayMatchesColumn is the table column denoting the away_matches relation/edge.
+	AwayMatchesColumn = "match_away_team"
 )
 
 // Columns holds all SQL columns for team fields.
