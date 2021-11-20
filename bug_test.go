@@ -3,9 +3,11 @@ package bug
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"net"
 	"strconv"
 	"testing"
+	"time"
 
 	"entgo.io/bug/ent"
 	"entgo.io/bug/ent/enttest"
@@ -44,7 +46,8 @@ func TestBugPostrgres(t *testing.T) {
 }
 
 func TestBugMaria(t *testing.T) {
-	for version, port := range map[string]int{"10.5": 4306, "10.2": 4307, "10.3": 4308} {
+	//for version, port := range map[string]int{"10.5": 4306, "10.2": 4307, "10.3": 4308} {
+	for version, port := range map[string]int{"10.5": 4306} {
 		t.Run(version, func(t *testing.T) {
 			addr := net.JoinHostPort("localhost", strconv.Itoa(port))
 			client := enttest.Open(t, dialect.MySQL, fmt.Sprintf("root:pass@tcp(%s)/test?parseTime=True", addr))
@@ -58,6 +61,20 @@ func test(t *testing.T, client *ent.Client) {
 	ctx := context.Background()
 	client.User.Delete().ExecX(ctx)
 	client.User.Create().SetName("Ariel").SetAge(30).ExecX(ctx)
+
+	teamA, err := client.Team.Create().SetName("Team A").Save(ctx)
+	assert.NoError(t, err)
+	teamB, err := client.Team.Create().SetName("Team B").Save(ctx)
+	assert.NoError(t, err)
+	match, err := client.Match.Create().
+		SetStartDate(time.Now()).
+		Save(ctx)
+	assert.NoError(t, err)
+
+	t.Log(teamA)
+	t.Log(teamB)
+	t.Log(match)
+
 	if n := client.User.Query().CountX(ctx); n != 1 {
 		t.Errorf("unexpected number of users: %d", n)
 	}

@@ -6,5 +6,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Match is the predicate function for match builders.
+type Match func(*sql.Selector)
+
+// Team is the predicate function for team builders.
+type Team func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

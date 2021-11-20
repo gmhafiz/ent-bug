@@ -9,6 +9,32 @@ import (
 	"entgo.io/bug/ent"
 )
 
+// The MatchFunc type is an adapter to allow the use of ordinary
+// function as Match mutator.
+type MatchFunc func(context.Context, *ent.MatchMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MatchFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.MatchMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MatchMutation", m)
+	}
+	return f(ctx, mv)
+}
+
+// The TeamFunc type is an adapter to allow the use of ordinary
+// function as Team mutator.
+type TeamFunc func(context.Context, *ent.TeamMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TeamFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	mv, ok := m.(*ent.TeamMutation)
+	if !ok {
+		return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TeamMutation", m)
+	}
+	return f(ctx, mv)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

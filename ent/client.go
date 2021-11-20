@@ -9,10 +9,13 @@ import (
 
 	"entgo.io/bug/ent/migrate"
 
+	"entgo.io/bug/ent/match"
+	"entgo.io/bug/ent/team"
 	"entgo.io/bug/ent/user"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -20,6 +23,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Match is the client for interacting with the Match builders.
+	Match *MatchClient
+	// Team is the client for interacting with the Team builders.
+	Team *TeamClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -35,6 +42,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Match = NewMatchClient(c.config)
+	c.Team = NewTeamClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -69,6 +78,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:    ctx,
 		config: cfg,
+		Match:  NewMatchClient(cfg),
+		Team:   NewTeamClient(cfg),
 		User:   NewUserClient(cfg),
 	}, nil
 }
@@ -88,6 +99,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
 		config: cfg,
+		Match:  NewMatchClient(cfg),
+		Team:   NewTeamClient(cfg),
 		User:   NewUserClient(cfg),
 	}, nil
 }
@@ -95,7 +108,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		User.
+//		Match.
 //		Query().
 //		Count(ctx)
 //
@@ -118,7 +131,221 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Match.Use(hooks...)
+	c.Team.Use(hooks...)
 	c.User.Use(hooks...)
+}
+
+// MatchClient is a client for the Match schema.
+type MatchClient struct {
+	config
+}
+
+// NewMatchClient returns a client for the Match from the given config.
+func NewMatchClient(c config) *MatchClient {
+	return &MatchClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `match.Hooks(f(g(h())))`.
+func (c *MatchClient) Use(hooks ...Hook) {
+	c.hooks.Match = append(c.hooks.Match, hooks...)
+}
+
+// Create returns a create builder for Match.
+func (c *MatchClient) Create() *MatchCreate {
+	mutation := newMatchMutation(c.config, OpCreate)
+	return &MatchCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Match entities.
+func (c *MatchClient) CreateBulk(builders ...*MatchCreate) *MatchCreateBulk {
+	return &MatchCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Match.
+func (c *MatchClient) Update() *MatchUpdate {
+	mutation := newMatchMutation(c.config, OpUpdate)
+	return &MatchUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MatchClient) UpdateOne(m *Match) *MatchUpdateOne {
+	mutation := newMatchMutation(c.config, OpUpdateOne, withMatch(m))
+	return &MatchUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MatchClient) UpdateOneID(id int) *MatchUpdateOne {
+	mutation := newMatchMutation(c.config, OpUpdateOne, withMatchID(id))
+	return &MatchUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Match.
+func (c *MatchClient) Delete() *MatchDelete {
+	mutation := newMatchMutation(c.config, OpDelete)
+	return &MatchDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *MatchClient) DeleteOne(m *Match) *MatchDeleteOne {
+	return c.DeleteOneID(m.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *MatchClient) DeleteOneID(id int) *MatchDeleteOne {
+	builder := c.Delete().Where(match.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MatchDeleteOne{builder}
+}
+
+// Query returns a query builder for Match.
+func (c *MatchClient) Query() *MatchQuery {
+	return &MatchQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Match entity by its id.
+func (c *MatchClient) Get(ctx context.Context, id int) (*Match, error) {
+	return c.Query().Where(match.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MatchClient) GetX(ctx context.Context, id int) *Match {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *MatchClient) Hooks() []Hook {
+	return c.hooks.Match
+}
+
+// TeamClient is a client for the Team schema.
+type TeamClient struct {
+	config
+}
+
+// NewTeamClient returns a client for the Team from the given config.
+func NewTeamClient(c config) *TeamClient {
+	return &TeamClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `team.Hooks(f(g(h())))`.
+func (c *TeamClient) Use(hooks ...Hook) {
+	c.hooks.Team = append(c.hooks.Team, hooks...)
+}
+
+// Create returns a create builder for Team.
+func (c *TeamClient) Create() *TeamCreate {
+	mutation := newTeamMutation(c.config, OpCreate)
+	return &TeamCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Team entities.
+func (c *TeamClient) CreateBulk(builders ...*TeamCreate) *TeamCreateBulk {
+	return &TeamCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Team.
+func (c *TeamClient) Update() *TeamUpdate {
+	mutation := newTeamMutation(c.config, OpUpdate)
+	return &TeamUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TeamClient) UpdateOne(t *Team) *TeamUpdateOne {
+	mutation := newTeamMutation(c.config, OpUpdateOne, withTeam(t))
+	return &TeamUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TeamClient) UpdateOneID(id int) *TeamUpdateOne {
+	mutation := newTeamMutation(c.config, OpUpdateOne, withTeamID(id))
+	return &TeamUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Team.
+func (c *TeamClient) Delete() *TeamDelete {
+	mutation := newTeamMutation(c.config, OpDelete)
+	return &TeamDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *TeamClient) DeleteOne(t *Team) *TeamDeleteOne {
+	return c.DeleteOneID(t.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *TeamClient) DeleteOneID(id int) *TeamDeleteOne {
+	builder := c.Delete().Where(team.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TeamDeleteOne{builder}
+}
+
+// Query returns a query builder for Team.
+func (c *TeamClient) Query() *TeamQuery {
+	return &TeamQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Team entity by its id.
+func (c *TeamClient) Get(ctx context.Context, id int) (*Team, error) {
+	return c.Query().Where(team.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TeamClient) GetX(ctx context.Context, id int) *Team {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryHomeID queries the home_id edge of a Team.
+func (c *TeamClient) QueryHomeID(t *Team) *MatchQuery {
+	query := &MatchQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, id),
+			sqlgraph.To(match.Table, match.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.HomeIDTable, team.HomeIDColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAwayID queries the away_id edge of a Team.
+func (c *TeamClient) QueryAwayID(t *Team) *MatchQuery {
+	query := &MatchQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, id),
+			sqlgraph.To(match.Table, match.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.AwayIDTable, team.AwayIDColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TeamClient) Hooks() []Hook {
+	return c.hooks.Team
 }
 
 // UserClient is a client for the User schema.

@@ -8,6 +8,44 @@ import (
 )
 
 var (
+	// MatchesColumns holds the columns for the "matches" table.
+	MatchesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "start_date", Type: field.TypeTime},
+		{Name: "team_home_id", Type: field.TypeInt, Nullable: true},
+		{Name: "team_away_id", Type: field.TypeInt, Nullable: true},
+	}
+	// MatchesTable holds the schema information for the "matches" table.
+	MatchesTable = &schema.Table{
+		Name:       "matches",
+		Columns:    MatchesColumns,
+		PrimaryKey: []*schema.Column{MatchesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "matches_teams_home_id",
+				Columns:    []*schema.Column{MatchesColumns[2]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "matches_teams_away_id",
+				Columns:    []*schema.Column{MatchesColumns[3]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// TeamsColumns holds the columns for the "teams" table.
+	TeamsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+	}
+	// TeamsTable holds the schema information for the "teams" table.
+	TeamsTable = &schema.Table{
+		Name:       "teams",
+		Columns:    TeamsColumns,
+		PrimaryKey: []*schema.Column{TeamsColumns[0]},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -22,9 +60,13 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		MatchesTable,
+		TeamsTable,
 		UsersTable,
 	}
 )
 
 func init() {
+	MatchesTable.ForeignKeys[0].RefTable = TeamsTable
+	MatchesTable.ForeignKeys[1].RefTable = TeamsTable
 }

@@ -12,6 +12,10 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Match is the client for interacting with the Match builders.
+	Match *MatchClient
+	// Team is the client for interacting with the Team builders.
+	Team *TeamClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -149,6 +153,8 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Match = NewMatchClient(tx.config)
+	tx.Team = NewTeamClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 
@@ -159,7 +165,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: User.QueryXXX(), the query will be executed
+// applies a query, for example: Match.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

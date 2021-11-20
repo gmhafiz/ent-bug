@@ -6,8 +6,11 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
+	"entgo.io/bug/ent/match"
 	"entgo.io/bug/ent/predicate"
+	"entgo.io/bug/ent/team"
 	"entgo.io/bug/ent/user"
 
 	"entgo.io/ent"
@@ -22,8 +25,782 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeUser = "User"
+	TypeMatch = "Match"
+	TypeTeam  = "Team"
+	TypeUser  = "User"
 )
+
+// MatchMutation represents an operation that mutates the Match nodes in the graph.
+type MatchMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	start_date    *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Match, error)
+	predicates    []predicate.Match
+}
+
+var _ ent.Mutation = (*MatchMutation)(nil)
+
+// matchOption allows management of the mutation configuration using functional options.
+type matchOption func(*MatchMutation)
+
+// newMatchMutation creates new mutation for the Match entity.
+func newMatchMutation(c config, op Op, opts ...matchOption) *MatchMutation {
+	m := &MatchMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMatch,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMatchID sets the ID field of the mutation.
+func withMatchID(id int) matchOption {
+	return func(m *MatchMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Match
+		)
+		m.oldValue = func(ctx context.Context) (*Match, error) {
+			once.Do(func() {
+				if m.done {
+					err = fmt.Errorf("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Match.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMatch sets the old Match of the mutation.
+func withMatch(node *Match) matchOption {
+	return func(m *MatchMutation) {
+		m.oldValue = func(context.Context) (*Match, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MatchMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MatchMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Match entities.
+func (m *MatchMutation) SetID(id int) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MatchMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// SetStartDate sets the "start_date" field.
+func (m *MatchMutation) SetStartDate(t time.Time) {
+	m.start_date = &t
+}
+
+// StartDate returns the value of the "start_date" field in the mutation.
+func (m *MatchMutation) StartDate() (r time.Time, exists bool) {
+	v := m.start_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStartDate returns the old "start_date" field's value of the Match entity.
+// If the Match object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MatchMutation) OldStartDate(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldStartDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldStartDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStartDate: %w", err)
+	}
+	return oldValue.StartDate, nil
+}
+
+// ResetStartDate resets all changes to the "start_date" field.
+func (m *MatchMutation) ResetStartDate() {
+	m.start_date = nil
+}
+
+// Where appends a list predicates to the MatchMutation builder.
+func (m *MatchMutation) Where(ps ...predicate.Match) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *MatchMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Match).
+func (m *MatchMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MatchMutation) Fields() []string {
+	fields := make([]string, 0, 1)
+	if m.start_date != nil {
+		fields = append(fields, match.FieldStartDate)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MatchMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case match.FieldStartDate:
+		return m.StartDate()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MatchMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case match.FieldStartDate:
+		return m.OldStartDate(ctx)
+	}
+	return nil, fmt.Errorf("unknown Match field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MatchMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case match.FieldStartDate:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStartDate(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Match field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MatchMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MatchMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MatchMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Match numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MatchMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MatchMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MatchMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Match nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MatchMutation) ResetField(name string) error {
+	switch name {
+	case match.FieldStartDate:
+		m.ResetStartDate()
+		return nil
+	}
+	return fmt.Errorf("unknown Match field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MatchMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MatchMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MatchMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MatchMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MatchMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MatchMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MatchMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Match unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MatchMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Match edge %s", name)
+}
+
+// TeamMutation represents an operation that mutates the Team nodes in the graph.
+type TeamMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *int
+	name           *string
+	clearedFields  map[string]struct{}
+	home_id        map[int]struct{}
+	removedhome_id map[int]struct{}
+	clearedhome_id bool
+	away_id        map[int]struct{}
+	removedaway_id map[int]struct{}
+	clearedaway_id bool
+	done           bool
+	oldValue       func(context.Context) (*Team, error)
+	predicates     []predicate.Team
+}
+
+var _ ent.Mutation = (*TeamMutation)(nil)
+
+// teamOption allows management of the mutation configuration using functional options.
+type teamOption func(*TeamMutation)
+
+// newTeamMutation creates new mutation for the Team entity.
+func newTeamMutation(c config, op Op, opts ...teamOption) *TeamMutation {
+	m := &TeamMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTeam,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTeamID sets the ID field of the mutation.
+func withTeamID(id int) teamOption {
+	return func(m *TeamMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Team
+		)
+		m.oldValue = func(ctx context.Context) (*Team, error) {
+			once.Do(func() {
+				if m.done {
+					err = fmt.Errorf("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Team.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTeam sets the old Team of the mutation.
+func withTeam(node *Team) teamOption {
+	return func(m *TeamMutation) {
+		m.oldValue = func(context.Context) (*Team, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TeamMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TeamMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Team entities.
+func (m *TeamMutation) SetID(id int) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TeamMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// SetName sets the "name" field.
+func (m *TeamMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *TeamMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Team entity.
+// If the Team object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TeamMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *TeamMutation) ResetName() {
+	m.name = nil
+}
+
+// AddHomeIDIDs adds the "home_id" edge to the Match entity by ids.
+func (m *TeamMutation) AddHomeIDIDs(ids ...int) {
+	if m.home_id == nil {
+		m.home_id = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.home_id[ids[i]] = struct{}{}
+	}
+}
+
+// ClearHomeID clears the "home_id" edge to the Match entity.
+func (m *TeamMutation) ClearHomeID() {
+	m.clearedhome_id = true
+}
+
+// HomeIDCleared reports if the "home_id" edge to the Match entity was cleared.
+func (m *TeamMutation) HomeIDCleared() bool {
+	return m.clearedhome_id
+}
+
+// RemoveHomeIDIDs removes the "home_id" edge to the Match entity by IDs.
+func (m *TeamMutation) RemoveHomeIDIDs(ids ...int) {
+	if m.removedhome_id == nil {
+		m.removedhome_id = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.home_id, ids[i])
+		m.removedhome_id[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedHomeID returns the removed IDs of the "home_id" edge to the Match entity.
+func (m *TeamMutation) RemovedHomeIDIDs() (ids []int) {
+	for id := range m.removedhome_id {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// HomeIDIDs returns the "home_id" edge IDs in the mutation.
+func (m *TeamMutation) HomeIDIDs() (ids []int) {
+	for id := range m.home_id {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetHomeID resets all changes to the "home_id" edge.
+func (m *TeamMutation) ResetHomeID() {
+	m.home_id = nil
+	m.clearedhome_id = false
+	m.removedhome_id = nil
+}
+
+// AddAwayIDIDs adds the "away_id" edge to the Match entity by ids.
+func (m *TeamMutation) AddAwayIDIDs(ids ...int) {
+	if m.away_id == nil {
+		m.away_id = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.away_id[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAwayID clears the "away_id" edge to the Match entity.
+func (m *TeamMutation) ClearAwayID() {
+	m.clearedaway_id = true
+}
+
+// AwayIDCleared reports if the "away_id" edge to the Match entity was cleared.
+func (m *TeamMutation) AwayIDCleared() bool {
+	return m.clearedaway_id
+}
+
+// RemoveAwayIDIDs removes the "away_id" edge to the Match entity by IDs.
+func (m *TeamMutation) RemoveAwayIDIDs(ids ...int) {
+	if m.removedaway_id == nil {
+		m.removedaway_id = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.away_id, ids[i])
+		m.removedaway_id[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAwayID returns the removed IDs of the "away_id" edge to the Match entity.
+func (m *TeamMutation) RemovedAwayIDIDs() (ids []int) {
+	for id := range m.removedaway_id {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AwayIDIDs returns the "away_id" edge IDs in the mutation.
+func (m *TeamMutation) AwayIDIDs() (ids []int) {
+	for id := range m.away_id {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAwayID resets all changes to the "away_id" edge.
+func (m *TeamMutation) ResetAwayID() {
+	m.away_id = nil
+	m.clearedaway_id = false
+	m.removedaway_id = nil
+}
+
+// Where appends a list predicates to the TeamMutation builder.
+func (m *TeamMutation) Where(ps ...predicate.Team) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *TeamMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Team).
+func (m *TeamMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TeamMutation) Fields() []string {
+	fields := make([]string, 0, 1)
+	if m.name != nil {
+		fields = append(fields, team.FieldName)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TeamMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case team.FieldName:
+		return m.Name()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TeamMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case team.FieldName:
+		return m.OldName(ctx)
+	}
+	return nil, fmt.Errorf("unknown Team field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TeamMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case team.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Team field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TeamMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TeamMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TeamMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Team numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TeamMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TeamMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TeamMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Team nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TeamMutation) ResetField(name string) error {
+	switch name {
+	case team.FieldName:
+		m.ResetName()
+		return nil
+	}
+	return fmt.Errorf("unknown Team field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TeamMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.home_id != nil {
+		edges = append(edges, team.EdgeHomeID)
+	}
+	if m.away_id != nil {
+		edges = append(edges, team.EdgeAwayID)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TeamMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case team.EdgeHomeID:
+		ids := make([]ent.Value, 0, len(m.home_id))
+		for id := range m.home_id {
+			ids = append(ids, id)
+		}
+		return ids
+	case team.EdgeAwayID:
+		ids := make([]ent.Value, 0, len(m.away_id))
+		for id := range m.away_id {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TeamMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedhome_id != nil {
+		edges = append(edges, team.EdgeHomeID)
+	}
+	if m.removedaway_id != nil {
+		edges = append(edges, team.EdgeAwayID)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TeamMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case team.EdgeHomeID:
+		ids := make([]ent.Value, 0, len(m.removedhome_id))
+		for id := range m.removedhome_id {
+			ids = append(ids, id)
+		}
+		return ids
+	case team.EdgeAwayID:
+		ids := make([]ent.Value, 0, len(m.removedaway_id))
+		for id := range m.removedaway_id {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TeamMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedhome_id {
+		edges = append(edges, team.EdgeHomeID)
+	}
+	if m.clearedaway_id {
+		edges = append(edges, team.EdgeAwayID)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TeamMutation) EdgeCleared(name string) bool {
+	switch name {
+	case team.EdgeHomeID:
+		return m.clearedhome_id
+	case team.EdgeAwayID:
+		return m.clearedaway_id
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TeamMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Team unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TeamMutation) ResetEdge(name string) error {
+	switch name {
+	case team.EdgeHomeID:
+		m.ResetHomeID()
+		return nil
+	case team.EdgeAwayID:
+		m.ResetAwayID()
+		return nil
+	}
+	return fmt.Errorf("unknown Team edge %s", name)
+}
 
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
